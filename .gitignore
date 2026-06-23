@@ -1,0 +1,25 @@
+# 1. Ignore specific files by full name
+config.json
+secret_token.txt
+
+# 2. Ignore any file with a specific extension (using wildcards)
+*.log
+*.tmp
+*.sqlite
+
+# 3. Ignore an entire directory/folder (add a trailing slash)
+node_modules/
+build/
+dist/
+.venv/
+
+# 4. Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# 5. Exception: Ignore all text files EXCEPT readme.txt
+*.txt
+!readme.txt
+
+# 6. Ignore files inside a subfolder but not at the root
+logs/*.log
