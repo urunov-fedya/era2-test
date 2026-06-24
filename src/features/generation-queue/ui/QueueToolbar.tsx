@@ -2,6 +2,7 @@ import { Chip } from "@/shared/ui/era";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import type { QueueFilter } from "../model/types";
 import { useQueueStore } from "../model/queueStore";
+import { useFilter, useSort } from "../model/selectors";
 
 const FILTERS: { key: QueueFilter; label: string }[] = [
   { key: "all", label: "Все" },
@@ -12,7 +13,9 @@ const FILTERS: { key: QueueFilter; label: string }[] = [
 ];
 
 export function QueueToolbar() {
-  const { filter, sort, setFilter, setSort } = useQueueStore();
+  const filter = useFilter();
+  const sort = useSort();
+  const { setFilter, setSort } = useQueueStore();
 
   const toggleSort = () => {
     setSort(sort === "newest" ? "oldest" : "newest");

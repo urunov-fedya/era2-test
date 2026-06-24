@@ -1,13 +1,28 @@
 import { useState } from "react";
 import { useNavigate } from "@/shared/routing";
-import { Progress } from "@/shared/ui/progress";
-import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
-import { Loader2, ChevronRight, ChevronUp, Minimize2 } from "lucide-react";
-import { useActiveTasks, useAverageProgress, useActiveCount } from "../model/selectors";
+import { Moon, ChevronRight, ChevronDown, FileText, Image, Video, Music } from "lucide-react";
+import type { GenerationTask, GenType } from "@/entities/generation-task";
+import { useTasksByStatus, useActiveTasks, useAverageProgress, useActiveCount } from "../model/selectors";
+
+
+const TYPE_LABELS: Record<GenType, string> = {
+  text: "Генерация текста",
+  image: "Генерация изображения",
+  video: "Генерация видео",
+  audio: "Генерация аудио",
+};
+
+const TYPE_ICONS: Record<GenType, React.ComponentType<{ className?: string }>> = {
+  text: FileText,
+  image: Image,
+  video: Video,
+  audio: Music,
+};
 
 export function QueueStatusBar() {
-  const activeTasks = useActiveTasks();
+  const runningTasks = useTasksByStatus("running");
+  const allActiveTasks = useActiveTasks();
   const activeCount = useActiveCount();
   const avgProgress = useAverageProgress();
   const navigate = useNavigate();
@@ -16,179 +31,210 @@ export function QueueStatusBar() {
   if (activeCount === 0) return null;
 
   const handleNavigate = () => navigate("/queue");
-  const toggleCollapsed = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCollapsed((c) => !c);
-  };
+  const toggleCollapsed = () => setCollapsed((c) => !c);
 
-  const displayTasks = activeTasks.slice(0, 3);
+  const displayTasks = allActiveTasks.slice(0, 3);
 
   return (
     <>
-      {/* Desktop/tablet: floating bottom-right */}
-      <div
-        className={cn(
-          "hidden md:block fixed bottom-6 right-6 z-50",
-          "rounded-2xl bg-card border border-border shadow-2xl",
-          "transition-all duration-300",
-          collapsed ? "cursor-pointer" : "cursor-default",
-        )}
-        onClick={collapsed ? () => setCollapsed(false) : undefined}
-      >
+      {/* Desktop/tablet */}
+      <div className="hidden md:block fixed bottom-6 right-6 z-50 w-[320px]">
         {collapsed ? (
-          <CollapsedPill count={activeCount} progress={avgProgress} onExpand={toggleCollapsed} />
-        ) : activeCount === 1 ? (
-          <SingleTaskBar task={displayTasks[0]} onCollapse={toggleCollapsed} onNavigate={handleNavigate} />
+          <CollapsedPill
+            count={activeCount}
+            progress={avgProgress}
+            onExpand={toggleCollapsed}
+          />
+        ) : activeCount === 1 && runningTasks.length === 1 ? (
+          <SingleTaskCard
+            task={runningTasks[0]}
+            onNavigate={handleNavigate}
+            onCollapse={toggleCollapsed}
+          />
         ) : (
-          <MultiTaskBar count={activeCount} progress={avgProgress} tasks={displayTasks} onCollapse={toggleCollapsed} onNavigate={handleNavigate} />
+          <MultiTaskCard
+            activeCount={activeCount}
+            progress={avgProgress}
+            tasks={displayTasks}
+            onNavigate={handleNavigate}
+            onCollapse={toggleCollapsed}
+          />
         )}
       </div>
 
-      {/* Mobile: full-width bottom panel */}
-      <div
-        className={cn(
-          "md:hidden fixed bottom-0 left-0 right-0 z-50 safe-bottom",
-          "bg-card border-t border-border transition-colors",
-          collapsed ? "cursor-pointer active:bg-secondary/50" : "cursor-default",
-        )}
-        onClick={collapsed ? () => setCollapsed(false) : undefined}
-      >
-        {collapsed ? (
-          <MobileCollapsedPill count={activeCount} progress={avgProgress} onExpand={toggleCollapsed} />
-        ) : activeCount === 1 ? (
-          <MobileSingleBar task={displayTasks[0]} onCollapse={toggleCollapsed} onNavigate={handleNavigate} />
-        ) : (
-          <MobileMultiBar count={activeCount} progress={avgProgress} onCollapse={toggleCollapsed} onNavigate={handleNavigate} />
-        )}
+      {/* Mobile: full-width bottom bar */}
+      <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 safe-bottom">
+        <MobileBar
+          activeCount={activeCount}
+          progress={avgProgress}
+          onNavigate={toggleCollapsed}
+        />
       </div>
     </>
   );
 }
 
-/* ── Collapsed pill (desktop) ── */
-function CollapsedPill({ count, progress, onExpand }: { count: number; progress: number; onExpand: (e: React.MouseEvent) => void }) {
+/* ── Collapsed pill ── */
+function CollapsedPill({ count, progress, onExpand }: { count: number; progress: number; onExpand: () => void }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2">
-      <Loader2 className="h-3.5 w-3.5 text-orange-400 animate-spin shrink-0" />
-      <span className="text-xs font-medium tabular-nums">{count} · {progress}%</span>
-      <Button variant="ghost" size="icon" onClick={onExpand} className="ml-1 h-6 w-6" aria-label="Развернуть">
-        <ChevronUp className="h-3 w-3" />
-      </Button>
-    </div>
+    <button
+      onClick={onExpand}
+      className={cn(
+        "flex items-center gap-2.5 px-4 py-2.5 rounded-full",
+        "bg-card border border-primary/60 shadow-lg",
+        "hover:border-primary transition-colors",
+      )}
+    >
+      <Moon className="h-4 w-4 text-primary shrink-0" />
+      <span className="text-sm font-medium">
+        {count} {count === 1 ? "генерация" : count < 5 ? "генерации" : "генераций"}
+      </span>
+      <span className="text-sm text-primary font-semibold font-mono">· {progress}%</span>
+    </button>
   );
 }
 
-/* ── Collapsed pill (mobile) ── */
-function MobileCollapsedPill({ count, progress, onExpand }: { count: number; progress: number; onExpand: (e: React.MouseEvent) => void }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-2">
-      <div className="flex items-center gap-2">
-        <Loader2 className="h-3.5 w-3.5 text-orange-400 animate-spin" />
-        <span className="text-xs font-medium tabular-nums">{count} · {progress}%</span>
-      </div>
-      <Button variant="ghost" size="icon" onClick={onExpand} className="h-7 w-7" aria-label="Развернуть">
-        <ChevronUp className="h-3.5 w-3.5" />
-      </Button>
-    </div>
-  );
-}
+/* ── Single task expanded card ── */
+function SingleTaskCard({ task, onNavigate, onCollapse }: { task: GenerationTask; onNavigate: () => void; onCollapse: () => void }) {
+  const Icon = TYPE_ICONS[task.type as GenType] ?? FileText;
+  const label = TYPE_LABELS[task.type as GenType] ?? "Генерация";
 
-/* ── Expanded: single task (desktop) ── */
-function SingleTaskBar({ task, onCollapse, onNavigate }: { task: { model: string; progress: number }; onCollapse: (e: React.MouseEvent) => void; onNavigate: () => void }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 min-w-[260px]">
-      <Loader2 className="h-4 w-4 text-orange-400 animate-spin shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground truncate">{task.model}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <Progress value={task.progress} className="h-1 flex-1" />
-          <span className="text-[10px] font-mono text-muted-foreground tabular-nums w-7 text-right">{task.progress}%</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-0.5 shrink-0">
-        <Button variant="ghost" size="icon" onClick={onCollapse} className="h-6 w-6" aria-label="Свернуть">
-          <Minimize2 className="h-3 w-3" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onNavigate} className="h-6 w-6" aria-label="Открыть очередь">
-          <ChevronRight className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/* ── Expanded: multiple tasks (desktop) ── */
-function MultiTaskBar({ count, progress, tasks, onCollapse, onNavigate }: { count: number; progress: number; tasks: { model: string; progress: number }[]; onCollapse: (e: React.MouseEvent) => void; onNavigate: () => void }) {
-  return (
-    <div className="px-4 py-3 min-w-[300px]">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-3.5 w-3.5 text-orange-400 animate-spin" />
-          <span className="text-xs font-medium">Генерации идут · {count} активны · {progress}%</span>
-        </div>
-        <div className="flex items-center gap-0.5">
-          <Button variant="ghost" size="icon" onClick={onCollapse} className="h-6 w-6" aria-label="Свернуть">
-            <Minimize2 className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onNavigate} className="h-6 w-6" aria-label="Открыть очередь">
-            <ChevronRight className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
-      <div className="space-y-1.5">
-        {tasks.map((t, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground truncate flex-1">{t.model}</span>
-            <Progress value={t.progress} className="h-1 w-16" />
-            <span className="text-[10px] font-mono text-muted-foreground tabular-nums w-6 text-right">{t.progress}%</span>
+    <div
+      className="rounded-2xl bg-card border border-border shadow-2xl overflow-hidden cursor-pointer"
+      onClick={onNavigate}
+    >
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-[#E85420] to-[#1A1614] shrink-0">
+              <Icon className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold leading-tight">{label}</p>
+              <p className="text-xs text-muted-foreground font-mono">
+                {task.model} · {task.progress}%
+              </p>
+            </div>
           </div>
-        ))}
-      </div>
-      <Button variant="link" size="sm" onClick={onNavigate} className="text-[11px] mt-1 h-auto p-0">Открыть очередь →</Button>
-    </div>
-  );
-}
+          <button
+            onClick={(e) => { e.stopPropagation(); onCollapse(); }}
+            className="text-muted-foreground hover:text-foreground transition-colors p-1"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
 
-/* ── Expanded: single task (mobile) ── */
-function MobileSingleBar({ task, onCollapse, onNavigate }: { task: { model: string; progress: number }; onCollapse: (e: React.MouseEvent) => void; onNavigate: () => void }) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-2.5">
-      <Loader2 className="h-4 w-4 text-orange-400 animate-spin shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground truncate">{task.model}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <Progress value={task.progress} className="h-1 flex-1" />
-          <span className="text-[10px] font-mono text-muted-foreground tabular-nums">{task.progress}%</span>
+        {/* Prompt preview */}
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3 leading-snug">
+          {task.prompt}
+        </p>
+
+        {/* Progress bar */}
+        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-[#E85420] to-[#ff7a3d] transition-all duration-300"
+            style={{ width: `${task.progress}%` }}
+          />
         </div>
       </div>
-      <div className="flex items-center gap-1 shrink-0">
-        <Button variant="ghost" size="icon" onClick={onCollapse} className="h-7 w-7" aria-label="Свернуть">
-          <Minimize2 className="h-3.5 w-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onNavigate} className="h-7 w-7" aria-label="Открыть очередь">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
     </div>
   );
 }
 
-/* ── Expanded: multiple tasks (mobile) ── */
-function MobileMultiBar({ count, progress, onCollapse, onNavigate }: { count: number; progress: number; onCollapse: (e: React.MouseEvent) => void; onNavigate: () => void }) {
+/* ── Mobile bottom bar ── */
+function MobileBar({ activeCount, progress, onNavigate }: { activeCount: number; progress: number; onNavigate: () => void }) {
   return (
-    <div className="flex items-center justify-between px-4 py-2.5">
-      <div className="flex items-center gap-2">
-        <Loader2 className="h-4 w-4 text-orange-400 animate-spin" />
-        <span className="text-xs font-medium">{count} генераций · {progress}%</span>
+    <button
+      onClick={onNavigate}
+      className="w-full rounded-md bg-card border border-primary/50 shadow-lg overflow-hidden text-left"
+    >
+      <div className="flex items-center gap-3 px-4 py-2.5">
+        <Moon className="h-5 w-5 text-primary shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold leading-tight">Генерации идут</p>
+          <p className="text-xs text-muted-foreground font-mono mt-0.5">
+            {activeCount} активны · {progress}%
+          </p>
+        </div>
+        <ChevronRight className="h-4 w-4 text-primary shrink-0" />
       </div>
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={onCollapse} className="h-7 w-7" aria-label="Свернуть">
-          <Minimize2 className="h-3.5 w-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onNavigate} className="h-7 w-7" aria-label="Открыть очередь">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+      <div className="h-1 bg-secondary">
+        <div
+          className="h-full bg-gradient-to-r from-[#E85420] to-[#ff7a3d] transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
       </div>
+    </button>
+  );
+}
+
+/* ── Multiple tasks expanded card ── */
+function MultiTaskCard({ activeCount, progress, tasks, onNavigate, onCollapse }: { activeCount: number; progress: number; tasks: GenerationTask[]; onNavigate: () => void; onCollapse: () => void }) {
+  return (
+    <div className="rounded-2xl bg-card border border-border shadow-2xl overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-[#E85420] to-[#1A1614] shrink-0">
+            <Moon className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Генерации идут</p>
+            <p className="text-xs text-muted-foreground font-mono">
+              {activeCount} активны · {progress}%
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onCollapse}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Task rows */}
+      <div className="px-4 space-y-2 pb-3">
+        {tasks.map((task) => {
+          const Icon = TYPE_ICONS[task.type as GenType] ?? FileText;
+          const isQueued = task.status === "queued";
+          return (
+            <div key={task.id} className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-[#E85420] to-[#1A1614] shrink-0">
+                <Icon className="h-3 w-3 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-foreground truncate mb-1">{task.prompt}</p>
+                {!isQueued && (
+                  <div className="h-1 bg-secondary rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#E85420] to-[#ff7a3d] transition-all duration-300"
+                      style={{ width: `${task.progress}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+              <span className={cn(
+                "text-xs font-mono tabular-nums shrink-0 w-14 text-right",
+                isQueued ? "text-muted-foreground" : "text-primary font-semibold",
+              )}>
+                {isQueued ? "в очереди" : `${task.progress}%`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <button
+        onClick={onNavigate}
+        className="w-full flex items-center justify-center gap-1.5 py-3 border-t border-border text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+      >
+        Открыть очередь
+        <ChevronRight className="h-4 w-4" />
+      </button>
     </div>
   );
 }

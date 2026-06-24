@@ -5,6 +5,8 @@ import {
   startEngine,
   stopEngine,
   useFilteredTasks,
+  useFilter,
+  useSearch,
   QueueStats,
   QueueToolbar,
   TaskRow,
@@ -14,8 +16,8 @@ import {
 
 export function GenerationQueue() {
   const clearDone = useQueueStore((s) => s.clearDone);
-  const filter = useQueueStore((s) => s.filter);
-  const search = useQueueStore((s) => s.search);
+  const filter = useFilter();
+  const search = useSearch();
   const tasks = useFilteredTasks();
 
   useEffect(() => {
