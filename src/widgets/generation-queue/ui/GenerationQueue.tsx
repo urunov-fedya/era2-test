@@ -16,6 +16,7 @@ import {
 export function GenerationQueue() {
   const clearDone = useQueueStore((s) => s.clearDone);
   const filter = useQueueStore((s) => s.filter);
+  const search = useQueueStore((s) => s.search);
   const tasks = useFilteredTasks();
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export function GenerationQueue() {
       <QueueToolbar />
 
       {tasks.length === 0 ? (
-        <EmptyState hasFilter={filter !== "all"} />
+        <EmptyState filter={filter} hasSearch={search.trim().length > 0} />
       ) : (
         <div className="space-y-2">
           {tasks.map((task) => (

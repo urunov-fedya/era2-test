@@ -77,10 +77,10 @@ export function useActiveTasks() {
   );
 }
 
-/** Running tasks only (no queued) — stable via useShallow. */
-export function useRunningTasks() {
+/** Tasks filtered by status — stable via useShallow. */
+export function useTasksByStatus(status: TaskStatus) {
   return useQueueStore(
-    useShallow((s) => s.tasks.filter((t) => t.status === "running")),
+    useShallow((s) => s.tasks.filter((t) => t.status === status)),
   );
 }
 
