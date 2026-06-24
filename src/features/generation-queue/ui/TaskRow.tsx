@@ -133,8 +133,8 @@ export function TaskRow({ task }: TaskRowProps) {
   const iconBg = TYPE_ICON_BG[task.type] ?? "bg-orange-600";
 
   return (
-    <div className="hidden md:block rounded-xl bg-card border border-border hover:bg-card/80 transition-colors overflow-hidden">
-      <div className="flex items-center gap-4 px-4 py-3">
+    <div className="hidden md:block rounded-[16px] bg-card border border-border hover:bg-card/80 transition-colors overflow-hidden">
+      <div className="flex items-center gap-4 px-4 py-[16.5px]">
         <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg shrink-0", iconBg)}>
           <Icon className="h-5 w-5 text-white" />
         </div>
@@ -144,7 +144,7 @@ export function TaskRow({ task }: TaskRowProps) {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {task.status === "running" && (
-            <span className="text-sm font-medium tabular-nums text-muted-foreground">
+            <span className="text-sm font-medium font-mono tabular-nums text-muted-foreground">
               {task.progress}%
             </span>
           )}

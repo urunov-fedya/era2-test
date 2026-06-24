@@ -21,7 +21,7 @@ export function QueueStats() {
             <span className={`w-2 h-2 rounded-full ${dotColor} shrink-0`} />
             <span className="text-xs text-muted-foreground">{label}</span>
           </div>
-          <p className="text-3xl font-semibold tabular-nums leading-none">{counts[key]}</p>
+          <p className="text-3xl font-semibold font-mono tabular-nums leading-none">{counts[key]}</p>
         </div>
       ))}
     </div>
