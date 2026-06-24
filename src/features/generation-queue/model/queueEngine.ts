@@ -20,6 +20,7 @@ const SPEED_MAP: Record<string, { min: number; max: number }> = {
 };
 
 let intervals: ReturnType<typeof setInterval>[] = [];
+let unsubStore: (() => void) | null = null;
 
 function getSpeed(type: string) {
   return SPEED_MAP[type] ?? SPEED_MAP.text;
@@ -91,6 +92,12 @@ export function startEngine() {
   }
 
   scheduleNext();
+
+  unsubStore = useQueueStore.subscribe((state, prevState) => {
+    if (state.tasks !== prevState.tasks) {
+      scheduleNext();
+    }
+  });
 }
 
 export function stopEngine() {
@@ -98,4 +105,6 @@ export function stopEngine() {
     clearInterval(id);
   }
   intervals = [];
+  unsubStore?.();
+  unsubStore = null;
 }
