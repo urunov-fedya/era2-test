@@ -77,6 +77,13 @@ export function useActiveTasks() {
   );
 }
 
+/** Running tasks only (no queued) — stable via useShallow. */
+export function useRunningTasks() {
+  return useQueueStore(
+    useShallow((s) => s.tasks.filter((t) => t.status === "running")),
+  );
+}
+
 /** Primitive: average progress of running tasks (0–100). Single-pass loop, no intermediate array. */
 export function useAverageProgress() {
   return useQueueStore((s) => {

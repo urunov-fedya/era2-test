@@ -70,16 +70,12 @@ function startTask(task: GenerationTask) {
 
 function scheduleNext() {
   const store = useQueueStore.getState();
-  const running = store.tasks.filter((t) => t.status === "running").length;
-  const available = MAX_CONCURRENT - running;
+  const available = MAX_CONCURRENT - store.getRunningCount();
   if (available <= 0) return;
 
-  const queued = store.tasks
-    .filter((t) => t.status === "queued")
-    .sort((a, b) => a.createdAt - b.createdAt);
-
-  for (let i = 0; i < Math.min(available, queued.length); i++) {
-    const task = queued[i];
+  for (let i = 0; i < available; i++) {
+    const task = store.getNextQueuedTask();
+    if (!task) break;
     store.updateTask(task.id, { status: "running", progress: 0 });
     startTask(task);
   }
@@ -90,7 +86,6 @@ export function startEngine() {
 
   const store = useQueueStore.getState();
   const running = store.tasks.filter((t) => t.status === "running");
-
   for (const task of running) {
     startTask(task);
   }

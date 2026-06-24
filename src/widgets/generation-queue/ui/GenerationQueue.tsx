@@ -1,24 +1,27 @@
 import { useEffect } from "react";
 import { Button } from "@/shared/ui/button";
 import { Trash2 } from "lucide-react";
-import { seedTasks } from "@/entities/generation-task";
-import { useQueueStore, startEngine, stopEngine, useFilteredTasks } from "@/features/generation-queue";
-import { QueueStats } from "@/features/generation-queue/ui/QueueStats";
-import { QueueToolbar } from "@/features/generation-queue/ui/QueueToolbar";
-import { TaskRow, TaskCard } from "@/features/generation-queue/ui/TaskRow";
-import { EmptyState } from "@/features/generation-queue/ui/QueueStates";
+import {
+  useQueueStore,
+  startEngine,
+  stopEngine,
+  useFilteredTasks,
+  QueueStats,
+  QueueToolbar,
+  TaskRow,
+  TaskCard,
+  EmptyState,
+} from "@/features/generation-queue";
 
 export function GenerationQueue() {
-  const init = useQueueStore((s) => s.init);
   const clearDone = useQueueStore((s) => s.clearDone);
   const filter = useQueueStore((s) => s.filter);
   const tasks = useFilteredTasks();
 
   useEffect(() => {
-    init(seedTasks);
     startEngine();
     return () => stopEngine();
-  }, [init]);
+  }, []);
 
   return (
     <div className="space-y-6">

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { GenerationTask } from "@/entities/generation-task";
+import { seedTasks } from "@/entities/generation-task";
 import type { QueueFilter, QueueSort } from "./types";
 
 interface QueueState {
@@ -8,12 +9,9 @@ interface QueueState {
   filter: QueueFilter;
   sort: QueueSort;
   search: string;
-  isLoading: boolean;
-  error: string | null;
 }
 
 interface QueueActions {
-  init: (tasks: GenerationTask[]) => void;
   updateTask: (id: string, patch: Partial<GenerationTask>) => void;
   cancelTask: (id: string) => void;
   retryTask: (id: string) => void;
@@ -22,8 +20,8 @@ interface QueueActions {
   setFilter: (filter: QueueFilter) => void;
   setSort: (sort: QueueSort) => void;
   setSearch: (search: string) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
+  getRunningCount: () => number;
+  getNextQueuedTask: () => GenerationTask | undefined;
 }
 
 export type QueueStore = QueueState & QueueActions;
@@ -31,21 +29,10 @@ export type QueueStore = QueueState & QueueActions;
 export const useQueueStore = create<QueueStore>()(
   persist(
     (set, get) => ({
-      tasks: [],
+      tasks: seedTasks,
       filter: "all" as QueueFilter,
       sort: "newest" as QueueSort,
       search: "",
-      isLoading: false,
-      error: null,
-
-      init: (tasks) => {
-        const existing = get().tasks;
-        if (existing.length > 0) return;
-        const restored = tasks.map((t) =>
-          t.status === "running" ? { ...t, status: "queued" as const, progress: 0 } : t,
-        );
-        set({ tasks: restored, isLoading: false, error: null });
-      },
 
       updateTask: (id, patch) => {
         set((s) => {
@@ -85,8 +72,12 @@ export const useQueueStore = create<QueueStore>()(
       setFilter: (filter) => set({ filter }),
       setSort: (sort) => set({ sort }),
       setSearch: (search) => set({ search }),
-      setLoading: (isLoading) => set({ isLoading }),
-      setError: (error) => set({ error }),
+
+      getRunningCount: () => get().tasks.filter((t) => t.status === "running").length,
+      getNextQueuedTask: () =>
+        get()
+          .tasks.filter((t) => t.status === "queued")
+          .sort((a, b) => a.createdAt - b.createdAt)[0],
     }),
     {
       name: "era2-queue-state",
