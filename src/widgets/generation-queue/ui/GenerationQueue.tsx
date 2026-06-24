@@ -5,7 +5,7 @@ import { seedTasks } from "@/entities/generation-task";
 import { useQueueStore, startEngine, stopEngine, useFilteredTasks } from "@/features/generation-queue";
 import { QueueStats } from "@/features/generation-queue/ui/QueueStats";
 import { QueueToolbar } from "@/features/generation-queue/ui/QueueToolbar";
-import { TaskItem } from "@/features/generation-queue/ui/TaskItem";
+import { TaskRow, TaskCard } from "@/features/generation-queue/ui/TaskRow";
 import { LoadingState, EmptyState, ErrorState } from "@/features/generation-queue/ui/QueueStates";
 
 export function GenerationQueue() {
@@ -87,7 +87,10 @@ export function GenerationQueue() {
       ) : (
         <div className="space-y-2">
           {tasks.map((task) => (
-            <TaskItem key={task.id} task={task} />
+            <div key={task.id}>
+              <TaskRow task={task} />
+              <TaskCard task={task} />
+            </div>
           ))}
         </div>
       )}

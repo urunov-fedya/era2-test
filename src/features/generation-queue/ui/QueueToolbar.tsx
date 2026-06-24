@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { Chip } from "@/shared/ui/era";
 import { Search, ArrowUpDown } from "lucide-react";
-import type { TaskStatus } from "@/entities/generation-task";
-import type { QueueFilter, QueueSort } from "../model/types";
+import type { QueueFilter } from "../model/types";
 import { useQueueStore } from "../model/queueStore";
 
 const FILTERS: { key: QueueFilter; label: string }[] = [
@@ -38,18 +37,13 @@ export function QueueToolbar() {
     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
       <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
         {FILTERS.map(({ key, label }) => (
-          <button
+          <Chip
             key={key}
+            active={filter === key}
             onClick={() => setFilter(key)}
-            className={cn(
-              "shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
-              filter === key
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-muted-foreground hover:text-foreground",
-            )}
           >
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
 
