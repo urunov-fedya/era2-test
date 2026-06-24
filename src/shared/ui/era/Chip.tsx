@@ -20,7 +20,7 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
         "text-[13px] font-medium leading-none",
         "border transition-colors duration-200",
         active
-          ? "bg-accent border-primary text-[#ff7a3d]"
+          ? "text-white border-primary bg-[#ff7a3d]"
           : "bg-card border-[hsl(var(--border))] text-muted-foreground hover:text-foreground hover:border-[hsl(20_17%_20%)]",
         className
       )}

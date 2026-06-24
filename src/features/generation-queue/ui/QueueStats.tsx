@@ -15,7 +15,7 @@ export function QueueStats() {
       {STATS.map(({ key, label, dotColor }) => (
         <div
           key={key}
-          className="flex flex-col gap-3 px-4 py-4 rounded-xl bg-card border border-border"
+          className="flex flex-col gap-3 p-4 rounded-[16px] bg-card border border-border"
         >
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${dotColor} shrink-0`} />
