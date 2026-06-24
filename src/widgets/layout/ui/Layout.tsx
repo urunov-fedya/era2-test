@@ -5,6 +5,7 @@ import { Header, Sidebar } from "@/widgets/navigation";
 import { CommandPaletteProvider } from "@/features/command-palette";
 import { useAuth } from "@/features/auth";
 import { useTheme } from "@/features/theme-switcher";
+import { QueueStatusBar } from "@/features/generation-queue";
 import { cn } from "@/shared/lib/utils";
 
 const sidebarPages = ["/text", "/design", "/video", "/audio", "/agents", "/toolkit", "/history", "/pricing", "/create"];
@@ -59,6 +60,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </main>
 
         <CommandPalette />
+
+        <QueueStatusBar />
 
         <div
           aria-hidden="true"
