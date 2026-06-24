@@ -6,55 +6,19 @@ import { useQueueStore, startEngine, stopEngine, useFilteredTasks } from "@/feat
 import { QueueStats } from "@/features/generation-queue/ui/QueueStats";
 import { QueueToolbar } from "@/features/generation-queue/ui/QueueToolbar";
 import { TaskRow, TaskCard } from "@/features/generation-queue/ui/TaskRow";
-import { LoadingState, EmptyState, ErrorState } from "@/features/generation-queue/ui/QueueStates";
+import { EmptyState } from "@/features/generation-queue/ui/QueueStates";
 
 export function GenerationQueue() {
-  const { init, clearDone, isLoading, error, setLoading, setError, filter } = useQueueStore();
+  const init = useQueueStore((s) => s.init);
+  const clearDone = useQueueStore((s) => s.clearDone);
+  const filter = useQueueStore((s) => s.filter);
   const tasks = useFilteredTasks();
 
   useEffect(() => {
-    const emulateLoad = async () => {
-      setLoading(true);
-      try {
-        await new Promise((resolve, reject) => {
-          setTimeout(() => {
-            if (Math.random() < 0.1) {
-              reject(new Error("Сбой инициализации"));
-            } else {
-              resolve(undefined);
-            }
-          }, 600);
-        });
-        init(seedTasks);
-      } catch {
-        setError("Не удалось загрузить очередь");
-        setLoading(false);
-      }
-    };
-    emulateLoad();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading && !error) {
-      startEngine();
-      return () => stopEngine();
-    }
-  }, [isLoading, error]);
-
-  if (error) {
-    return (
-      <ErrorState
-        onRetry={() => {
-          setError(null);
-          setLoading(true);
-          setTimeout(() => {
-            init(seedTasks);
-          }, 600);
-        }}
-      />
-    );
-  }
+    init(seedTasks);
+    startEngine();
+    return () => stopEngine();
+  }, [init]);
 
   return (
     <div className="space-y-6">
@@ -80,9 +44,7 @@ export function GenerationQueue() {
 
       <QueueToolbar />
 
-      {isLoading ? (
-        <LoadingState />
-      ) : tasks.length === 0 ? (
+      {tasks.length === 0 ? (
         <EmptyState hasFilter={filter !== "all"} />
       ) : (
         <div className="space-y-2">
